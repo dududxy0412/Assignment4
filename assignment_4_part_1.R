@@ -26,7 +26,8 @@
 #############################
 # Step 1: clean and understand Steam data
 #############################
-
+# ====== CLEAR EVERYTHING ======
+rm(list = ls())
 # We start with two data sets: Twitch and Steam. In this step we first work on cleaning Steam data
 # There are three files. game_attributes, game_players, and game_price_changes
 #   The primary key for game_attributes is $app_id. This is app-level data on their attributes.
