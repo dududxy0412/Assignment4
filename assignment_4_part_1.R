@@ -28,6 +28,31 @@
 #############################
 # ====== CLEAR EVERYTHING ======
 rm(list = ls())
+library(httr)
+
+# 定义一个函数，用于从Dropbox下载文件
+download_from_dropbox <- function(url, destfile) {
+    dropbox_url <- gsub("www.dropbox.com", "dl.dropboxusercontent.com", url)
+    GET(dropbox_url, write_disk(destfile, overwrite = TRUE))
+}
+
+# 下载CSV文件
+url1 <- "https://www.dropbox.com/scl/fi/n7vtdpym7sfsks3fnmrlz/game_attributes.csv?rlkey=ni7qq0507k81v0gwozn3j2wmv&dl=0"
+url2 <- "https://www.dropbox.com/scl/fi/x4k0b5vd9n7e6q4vvo3tj/game_players.csv?rlkey=jgp95ncmiq6871cigl2rek0iw&dl=0"
+url3 <- "https://www.dropbox.com/scl/fi/wlnm74032ytl8sfz0fy2d/game_price_changes.csv?rlkey=iaon3h6zajbr22jbiijic9rmh&dl=0"
+
+destfile1 <- "game_attributes.csv"
+destfile2 <- "game_players.csv"
+destfile3 <- "game_price_changes.csv"
+
+download_from_dropbox(url1, destfile1)
+download_from_dropbox(url2, destfile2)
+download_from_dropbox(url3, destfile3)
+
+# 读取CSV文件
+game_attributes_data <- read.csv(destfile1)
+game_players_data <- read.csv(destfile2)
+game_price_changes_data <- read.csv(destfile3)
 # We start with two data sets: Twitch and Steam. In this step we first work on cleaning Steam data
 # There are three files. game_attributes, game_players, and game_price_changes
 #   The primary key for game_attributes is $app_id. This is app-level data on their attributes.
