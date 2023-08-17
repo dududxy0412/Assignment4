@@ -81,15 +81,6 @@
 
 
 
-f <- function(x) {
-    y <- 10
-    return(g(x))
-}g
-<- function(x) {
-    return(x + y)
-}
-f(5)
-
 
 
 
