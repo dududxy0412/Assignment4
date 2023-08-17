@@ -21,12 +21,12 @@
 
 # Load necessary libraries
 #TASK
-#1) date变时区 把原来time dicard掉
+#1) date变时区 把time dicard掉
 #2）string提取信息：positive ratings and the average rating number???
-#3) price-date data cleaning
+#3) price-date data cleaning 
 #4) average daily number of players, average price, total number of price changes, number of ratings and the fraction of positive reviews
 #5) mean sd
-#6) paid games: 9 games with the highest average daily players.
+#6) paid games: 9 games with the highest average daily players. 
 
 
 #############################
