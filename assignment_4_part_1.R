@@ -84,7 +84,28 @@ game_attributes_data$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user 
 #   to $11.24 on 2012-11-22. This means that before the change on 2012-11-22, the price stayed at $9.99. 
 #   By the end of this step, you should have a price data at the level of game-date. There should be no gap in dates unless 
 #   for specific reasons that lead to missing data. You should then be able to merge the players data with the price data.
-
+library(data.table)
+setDT(game_attributes_data)
+setDT(game_players_data)
+setDT(game_price_changes_data)
+setorder(game_price_changes_data, game_id, date)
+daily_price_data <- data.table()
+unique_game_ids <- unique(game_price_changes_data$game_id)
+for (game_id in unique_game_ids) {
+  game_data <- game_price_changes_data[game_id == game_id]
+    last_known_price <- NA_real_
+  for (i in 1:nrow(game_data)) {
+    date <- game_data$date[i]
+    price <- game_data$price[i]
+      if (is.na(price)) {
+      game_data[i, price := last_known_price]
+    } else {
+      last_known_price <- price
+    }
+      daily_price_data <- rbind(daily_price_data, data.table(game_id = game_id, date = date, price = price))
+  }
+}
+merged_data <- merge(game_players_data, daily_price_data, by = c('game_id', 'date'))
 # Finally, produce summary statistics at the game level: for each game, first compute the average daily number of players, 
 #   average price, total number of price changes, number of ratings and the fraction of positive reviews, Then summarize the 
 #   mean and standard deviation of these variables across games. Also, find all paid games (i.e., games with an average price 
