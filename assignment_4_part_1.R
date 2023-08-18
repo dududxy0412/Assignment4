@@ -93,41 +93,22 @@ game_attributes_clean$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user
 #   to $11.24 on 2012-11-22. This means that before the change on 2012-11-22, the price stayed at $9.99. 
 #   By the end of this step, you should have a price data at the level of game-date. There should be no gap in dates unless 
 #   for specific reasons that lead to missing data. You should then be able to merge the players data with the price data.
-# Load the necessary libraries
-library(data.table)
-
-# Convert data.frames to data.tables
-setDT(game_attributes_data)
+# Convert datasets to data.tables explicitly
+setDT(game_attributes_clean)
 setDT(game_players_data)
 setDT(game_price_changes_data)
-
-# Step 1: Sort the price change data by game_id and date
-setorder(game_price_changes_data, game_id, date)
-
-# Step 2: Create a new data.table to store daily price data
-daily_price_data <- data.table()
-
-# Step 3: Iterate through unique game IDs
-unique_game_ids <- unique(game_price_changes_data$game_id)
-for (game_id in unique_game_ids) {
-  game_data <- game_price_changes_data[game_id == game_id]
-  
-  last_known_price <- NA_real_
-  for (i in 1:nrow(game_data)) {
-    date <- game_data$date[i]
-    price <- game_data$price[i]
-    
-    # If the price is missing, use the previous known price
-    if (is.na(price)) {
-      game_data[i, price := last_known_price]
-    } else {
-      last_known_price <- price
-    }
-    
-    # Add the entry to daily_price_data
-    daily_price_data <- rbind(daily_price_data, data.table(game_id = game_id, date = date, price = price))
-  }
-}
+#1. 确保 price_change_date 是日期类型
+game_price_changes_data$price_change_date <- as.Date(game_price_changes_data$price_change_date)
+# 2. 移除含有 NA 的行
+game_price_changes_data <- game_price_changes_data[!is.na(price_change_date)]
+# 再次为每款游戏创建日期序列
+dates_list <- game_price_changes_data[, .(date_seq = seq(min(price_change_date), max(price_change_date), by = "days")), by = app_id]
+# 将日期序列与实际价格数据合并
+daily_prices <- merge(dates_list, game_price_changes_data, by.x = c("app_id", "date_seq"), by.y = c("app_id", "price_change_date"), all.x = TRUE)
+#使用setorder按照app_id和date_seq对daily_prices进行排序
+setorder(daily_prices, app_id, date_seq) 
+#使用nafill函数将每个app_id的price列中的NA值替换为上一个非NA值这相当于前向填充了这些NA值
+daily_prices[, price := nafill(price, type="locf"), by=app_id]
 
 # Step 4: Merge players data with daily price data
 merged_data <- merge(game_players_data, daily_price_data, by = c('game_id', 'date'))
