@@ -111,10 +111,6 @@ setorder(daily_prices, app_id, date_seq)
 #使用nafill函数将每个app_id的price列中的NA值替换为上一个非NA值这相当于前向填充了这些NA值
 daily_prices[, price := nafill(price, type="locf"), by=app_id]
 
-# Step 4: Merge players data with daily price data
-merged_data <- merge(game_players_data, daily_price_data, by = c('game_id', 'date'))
-
-# Now you have the merged data with daily prices at the game-date level
 
 
 # Finally, produce summary statistics at the game level: for each game, first compute the average daily number of players, 
