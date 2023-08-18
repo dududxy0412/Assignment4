@@ -98,23 +98,26 @@ setDT(game_attributes_data)
 setDT(game_players_data)
 setDT(game_price_changes_data)
 setorder(game_price_changes_data, game_id, date)
-daily_price_data <- data.table()
+daily_price_data_list <- list()
 unique_game_ids <- unique(game_price_changes_data$game_id)
 for (game_id in unique_game_ids) {
   game_data <- game_price_changes_data[game_id == game_id]
-    last_known_price <- NA_real_
+  last_known_price <- NA_real_
+  daily_data <- data.table(game_id = game_id, date = game_data$date, price = rep(NA_real_, nrow(game_data)))
   for (i in 1:nrow(game_data)) {
-    date <- game_data$date[i]
     price <- game_data$price[i]
-      if (is.na(price)) {
-      game_data[i, price := last_known_price]
+    if (is.na(price)) {
+      daily_data[i, price := last_known_price]
     } else {
       last_known_price <- price
+      daily_data[i, price := price]
     }
-      daily_price_data <- rbind(daily_price_data, data.table(game_id = game_id, date = date, price = price))
   }
+  daily_price_data_list[[game_id]] <- daily_data
 }
+daily_price_data <- rbindlist(daily_price_data_list)
 merged_data <- merge(game_players_data, daily_price_data, by = c('game_id', 'date'))
+
 # Finally, produce summary statistics at the game level: for each game, first compute the average daily number of players, 
 #   average price, total number of price changes, number of ratings and the fraction of positive reviews, Then summarize the 
 #   mean and standard deviation of these variables across games. Also, find all paid games (i.e., games with an average price 
