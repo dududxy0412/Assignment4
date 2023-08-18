@@ -141,6 +141,64 @@ merged_data <- merge(game_players_data, daily_price_data, by = c('game_id', 'dat
 
 
 
+#############################
+# Step 3: now load the Twitch streamer data
+#############################
+
+# now read Twitch data. There are two files. 
+#   Data twitch_profiles has the key $streamer. This is a sample of about 10,000 streamers. 
+#   Data twitch_streams' key should be each observation, which is a stream. 
+#   A stream is broadcasted by $streamer on a $date, but notice that a streamer on a date can have multiple streams. 
+#   Variable $viewers records how many viewers are simultaneously present in the stream. $duration is the number of hours of the stream. 
+#   $unique_viewers is the number of viewers who ever appeared. $followers is the number of followers of the streamer at the time of the 
+#   stream. $stream_title is the title of the stream. And $games is a list of all games that are broadcasted in the same stream. 
+
+
+
+
+# Now, let us organize the data such that we count the total amount of viewing time for each game on each day. To do this, we have to process
+#   the data in a few steps:
+#   1. restructure the data into stream (the original level of observation)-game level. That is, we should put different 
+#   games in different observations for each stream. 
+#   2. for each stream, multiply the number of viewers (not the unique viewer) by the stream duration to get the viewing time (unit is viewer-hour). 
+#   Then divide viewing time by the number of games. Here, we're assuming that each game gets equal amount of exposure. 
+#   3. sum up the total viewing time for each game on each day, across streams. Also count how many streamers broadcasted the game on each day.
+#   Finally, because some streamers are "big" in that they attract many viewers, whereas other streamers are small. Compute a follower-weighted 
+#   measure of the number of streamers by summing up all streamers who broadcast the game by their followers (sum followers for those who broadcast game j)
+
+
+
+
+
+#############################
+# Step 4: Is there an association between Twitch streaming and video game playing?
+#############################
+
+# Now we're ready to examine whether Twitch broadcasts are associated with the number of players in games
+#   To begin with, merge the Twitch data on the daily total viewing hours and the number of streamers. 
+#   Drop games that do not exist in both data, but keep all dates for games that exist in both data even if 
+#   that date does not have streams. Finally, keep observations after 2017-01-01. 
+# For days when there is no stream, replace viewing hour, number of streamers, and sum of streamers' followers to zero
+# Drop observations without data on the number of players
+
+
+
+
+
+# Now examine the correlation between the number of streamers who broadcast the game and the number of players 
+#   First, for each of the top-9 paid games we obtain from step 2, plot the number of players and the number of streamers. 
+#   Separately, plot the number of players against the log viewing hours + 1 (so if viewing_hours = 0, log(viewing_hours + 1) 
+#   is not NaN). In both cases, title the graph with the correlation coefficient between the two covariates. 
+#   Alternatively, you can plot viewing hours, players, and number of streamers against time, just like what we did in step 2.
+
+
+
+
+
+
+
+
+
 
 
 
