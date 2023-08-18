@@ -70,12 +70,21 @@ game_price_changes_data <- read.csv(destfile3)
 #   aspect. $rating_text contains useful information. We want the percentage of positive ratings and the average rating number
 #   in two separate variables. For all data, keep games with the type "game" and with non-missing release date, rating, and reviews.
 
-game_attributes_data$pos_percentage <- ifelse(grepl("^\\d+\\.\\d+% of.*", game_attributes_data$rating_text),
-                          sub("^(\\d+\\.\\d+)% of.*", "\\1%", game_attributes_data$rating_text),
+game_attributes_clean <- subset(game_attributes_data, 
+                                app_type == "Game")
+
+game_attributes_clean <- game_attributes_clean[
+    complete.cases(game_attributes_clean) & game_attributes_clean$release_date != "" & game_attributes_clean$rating_text != "" & game_attributes_clean$game_desc != "", ]
+
+game_attributes_clean$release_ymd <- 0
+game_attributes_clean$release_ymd <- as.Date(strptime(game_attributes_clean$release_date, format = "%d %B %Y"))
+
+game_attributes_clean$pos_percentage <- ifelse(grepl("^\\d+\\.\\d+% of.*", game_attributes_clean$rating_text),
+                          sub("^(\\d+\\.\\d+)% of.*", "\\1%", game_attributes_clean$rating_text),
                           NA) #extract percentage data of postive ratings from rating_text
 
-game_attributes_data$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user reviews are positive.*", 
-                                               "\\1", game_attributes_data$rating_text) # extract how many reviews are postive from rating_text但是我越做越不对 总感觉不是这个意思 明天去问问
+game_attributes_clean$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user reviews are positive.*", 
+                                               "\\1", game_attributes_clean$rating_text) # extract how many reviews are postive from rating_text但是我越做越不对 总感觉不是这个意思 明天去问问
 
 # We need to clean the price change data to get daily prices. For a game-date combination, if the game_price_changes 
 #   data has an observation on that day, the $price variable in that data measures the price on that day. If there is no 
