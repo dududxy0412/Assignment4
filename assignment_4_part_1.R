@@ -70,6 +70,13 @@ game_price_changes_data <- read.csv(destfile3)
 #   aspect. $rating_text contains useful information. We want the percentage of positive ratings and the average rating number
 #   in two separate variables. For all data, keep games with the type "game" and with non-missing release date, rating, and reviews.
 
+game_attributes_data$pos_percentage <- ifelse(grepl("^\\d+\\.\\d+% of.*", game_attributes_data$rating_text),
+                          sub("^(\\d+\\.\\d+)% of.*", "\\1%", game_attributes_data$rating_text),
+                          NA) #extract percentage data of postive ratings from rating_text
+
+game_attributes_data$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user reviews are positive.*", 
+                                               "\\1", game_attributes_data$rating_text) # extract how many reviews are postive from rating_text但是我越做越不对 总感觉不是这个意思 明天去问问
+
 # We need to clean the price change data to get daily prices. For a game-date combination, if the game_price_changes 
 #   data has an observation on that day, the $price variable in that data measures the price on that day. If there is no 
 #   price data on a day, we know that price did not change on that day, so its takes the previous value. For example, for 
