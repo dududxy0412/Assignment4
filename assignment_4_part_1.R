@@ -93,30 +93,47 @@ game_attributes_clean$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user
 #   to $11.24 on 2012-11-22. This means that before the change on 2012-11-22, the price stayed at $9.99. 
 #   By the end of this step, you should have a price data at the level of game-date. There should be no gap in dates unless 
 #   for specific reasons that lead to missing data. You should then be able to merge the players data with the price data.
+# Load the necessary libraries
 library(data.table)
+
+# Convert data.frames to data.tables
 setDT(game_attributes_data)
 setDT(game_players_data)
 setDT(game_price_changes_data)
+
+# Step 1: Sort the price change data by game_id and date
 setorder(game_price_changes_data, game_id, date)
-daily_price_data_list <- list()
+
+# Step 2: Create a new data.table to store daily price data
+daily_price_data <- data.table()
+
+# Step 3: Iterate through unique game IDs
 unique_game_ids <- unique(game_price_changes_data$game_id)
 for (game_id in unique_game_ids) {
   game_data <- game_price_changes_data[game_id == game_id]
+  
   last_known_price <- NA_real_
-  daily_data <- data.table(game_id = game_id, date = game_data$date, price = rep(NA_real_, nrow(game_data)))
   for (i in 1:nrow(game_data)) {
+    date <- game_data$date[i]
     price <- game_data$price[i]
+    
+    # If the price is missing, use the previous known price
     if (is.na(price)) {
-      daily_data[i, price := last_known_price]
+      game_data[i, price := last_known_price]
     } else {
       last_known_price <- price
-      daily_data[i, price := price]
     }
+    
+    # Add the entry to daily_price_data
+    daily_price_data <- rbind(daily_price_data, data.table(game_id = game_id, date = date, price = price))
   }
-  daily_price_data_list[[game_id]] <- daily_data
 }
-daily_price_data <- rbindlist(daily_price_data_list)
+
+# Step 4: Merge players data with daily price data
 merged_data <- merge(game_players_data, daily_price_data, by = c('game_id', 'date'))
+
+# Now you have the merged data with daily prices at the game-date level
+
 
 # Finally, produce summary statistics at the game level: for each game, first compute the average daily number of players, 
 #   average price, total number of price changes, number of ratings and the fraction of positive reviews, Then summarize the 
