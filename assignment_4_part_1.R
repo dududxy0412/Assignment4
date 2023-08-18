@@ -95,6 +95,7 @@ game_attributes_clean$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user
 #   By the end of this step, you should have a price data at the level of game-date. There should be no gap in dates unless 
 #   for specific reasons that lead to missing data. You should then be able to merge the players data with the price data.
 # Convert datasets to data.tables explicitly
+library(data.table)
 setDT(game_attributes_clean)
 setDT(game_players_data)
 setDT(game_price_changes_data)
