@@ -360,6 +360,21 @@ viewing.time
 twitch_streams_data <- cbind(twitch_streams_data, viewing.time)
 
 
+
+divided.viewing.time.data  <- aggregate(
+    x= viewing.time ~ games,
+    data = twitch_streams_data,
+    FUN = sum
+)
+divided.viewing.time.data 
+
+
+number.games <-length(total.viewing.time$games)
+
+divided.viewing.time <- total.viewing.time$viewing.time/number.games
+
+
+divided.viewing.time.data <- cbind(divided.viewing.time.data, divided.viewing.time )
 #############################
 # Step 4: Is there an association between Twitch streaming and video game playing?
 #############################
