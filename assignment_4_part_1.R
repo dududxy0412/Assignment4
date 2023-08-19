@@ -130,28 +130,38 @@ game_players_price_data
 #   above zero), and among those paid games, find 9 games with the highest average daily players. Produce summary statistics 
 #   for each of these 9 games. Print these summary stats in the console. Optionally, export the summary stats into tables. 
 
-avg_daily_players<- aggregate(player_count ~ app_id, data = game_players_price_data, FUN = mean, na.rm = TRUE)
+avg_daily_players <- aggregate(player_count ~ app_id, data = game_players_price_data, FUN = mean, na.rm = TRUE)
 average_price <- aggregate(price ~ app_id, data = game_players_price_data, FUN = mean, na.rm = TRUE)
-price_changes <- aggregate(
-    x = list(changes_time = game_price_changes_data$price_change_date),
-    by = list(app_id = game_price_changes_data$app_id),
-    FUN = length
-)
-mean(avg_daily_players$player_count)
-mean(average_price$price)
-mean(price_changes$changes_time)
-mean(game_attributes_clean$pos_percentage)
-mean(game_attributes_clean$user_review_counts)
+price_changes <- aggregate(x = list(changes_time = game_price_changes_data$price_change_date), by = list(app_id = game_price_changes_data$app_id), FUN = length)
 
-sd(avg_daily_players$player_count)
-sd(average_price$price)
-sd(price_changes$changes_time)
-sd(game_attributes_clean$pos_percentage)
-sd(game_attributes_clean$user_review_counts)
-paid_games <- average_price[average_price$price > 0, ]
-avg_daily_players <- avg_daily_players[!is.na(avg_daily_players$player_count), ]
-top_9_games <- avg_daily_players[order(-avg_daily_players$player_count),][1:9,]
-print(top_9_games)
+summary_statistics <- merge(avg_daily_players,average_price,by = "app_id")
+summary_statistics <- merge(summary_statistics,price_changes,by = "app_id")
+summary_statistics <- merge(summary_statistics , game_attributes_clean[, c("app_id", "pos_percentage", "user_review_counts")], by = "app_id")
+
+# 4. Compute global mean and standard deviation of these values
+summary_stats <- data.frame(
+    means = c(
+        mean(avg_daily_players$player_count, na.rm = TRUE),
+        mean(average_price$price, na.rm = TRUE),
+        mean(price_changes$changes_time, na.rm = TRUE),
+        mean(game_attributes_clean$pos_percentage, na.rm = TRUE),
+        mean(game_attributes_clean$user_review_counts, na.rm = TRUE)
+    ),
+    sds = c(
+        sd(avg_daily_players$player_count, na.rm = TRUE),
+        sd(average_price$price, na.rm = TRUE),
+        sd(price_changes$changes_time, na.rm = TRUE),
+        sd(game_attributes_clean$pos_percentage, na.rm = TRUE),
+        sd(game_attributes_clean$user_review_counts, na.rm = TRUE)
+    )
+)
+
+# 5. Filter out free games and retrieve the 9 games with the highest average daily players
+paid_games <- summary_statistics[summary_statistics$price > 0,]
+top9_games <- paid_games[order(-paid_games$player_count), ][1:9, ]
+
+# 6. Print top 9 games with their details
+print(top9_games)
 
 
 #############################
