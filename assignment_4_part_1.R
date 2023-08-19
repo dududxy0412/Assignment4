@@ -37,35 +37,41 @@ rm(list = ls())
 library(httr)
 library(data.table)
 
-# 定义一个函数，用于从Dropbox下载文件
-download_from_dropbox <- function(url, destfile) {
-    dropbox_url <- gsub("www.dropbox.com", "dl.dropboxusercontent.com", url)
-    GET(dropbox_url, write_disk(destfile, overwrite = TRUE))
-}
-
-# 下载CSV文件
-url1 <- "https://www.dropbox.com/scl/fi/n7vtdpym7sfsks3fnmrlz/game_attributes.csv?rlkey=ni7qq0507k81v0gwozn3j2wmv&dl=0"
-url2 <- "https://www.dropbox.com/scl/fi/x4k0b5vd9n7e6q4vvo3tj/game_players.csv?rlkey=jgp95ncmiq6871cigl2rek0iw&dl=0"
-url3 <- "https://www.dropbox.com/scl/fi/wlnm74032ytl8sfz0fy2d/game_price_changes.csv?rlkey=iaon3h6zajbr22jbiijic9rmh&dl=0"
-
-destfile1 <- "game_attributes.csv"
-destfile2 <- "game_players.csv"
-destfile3 <- "game_price_changes.csv"
-
-download_from_dropbox(url1, destfile1)
-download_from_dropbox(url2, destfile2)
-download_from_dropbox(url3, destfile3)
-
-# 读取CSV文件
-game_attributes_data <- read.csv(destfile1)
-game_players_data <- read.csv(destfile2)
-game_price_changes_data <- read.csv(destfile3)
 # We start with two data sets: Twitch and Steam. In this step we first work on cleaning Steam data
 # There are three files. game_attributes, game_players, and game_price_changes
 #   The primary key for game_attributes is $app_id. This is app-level data on their attributes.
 #   The primary key for game_players is $app_id and $date. This is daily data for the number of players in the game
 #   The primary key for game_price_changes is $app_id and $price_change_date. This is a record of the price-changing
 #   occasions and the new prices at those occasions. 
+
+download_from_dropbox <- function(url, destfile) {
+     dropbox_url <- gsub("www.dropbox.com", "dl.dropboxusercontent.com", url)
+     GET(dropbox_url, write_disk(destfile, overwrite = TRUE))
+}
+
+url1 <- "https://www.dropbox.com/scl/fi/n7vtdpym7sfsks3fnmrlz/game_attributes.csv?rlkey=ni7qq0507k81v0gwozn3j2wmv&dl=0"
+url2 <- "https://www.dropbox.com/scl/fi/x4k0b5vd9n7e6q4vvo3tj/game_players.csv?rlkey=jgp95ncmiq6871cigl2rek0iw&dl=0"
+url3 <- "https://www.dropbox.com/scl/fi/wlnm74032ytl8sfz0fy2d/game_price_changes.csv?rlkey=iaon3h6zajbr22jbiijic9rmh&dl=0"
+url4 <- "https://www.dropbox.com/scl/fi/16r20vxsr2ykctml2woeh/twitch_profiles.csv?rlkey=cl4wvpq0cjmizjonf6zy28wzc&dl=0"
+url5 <- "https://www.dropbox.com/scl/fi/0wrzc8i8wglqtifsgitl7/twitch_streams.csv?rlkey=w409e8kug8buisgo5a8i47p4t&dl=0"
+
+destfile1 <- "game_attributes.csv"
+destfile2 <- "game_players.csv"
+destfile3 <- "game_price_changes.csv"
+destfile4 <- "twitch_profiles.csv"
+destfile5 <- "twitch_streams.csv"
+
+download_from_dropbox(url1, destfile1)
+download_from_dropbox(url2, destfile2)
+download_from_dropbox(url3, destfile3)
+download_from_dropbox(url4, destfile4)
+download_from_dropbox(url5, destfile5)
+
+game_attributes_data <- read.csv(destfile1)
+game_players_data <- read.csv(destfile2)
+game_price_changes_data <- read.csv(destfile3)
+twitch_profiles_data <- read.csv(destfile4)
+twitch_streams_data <- read.csv(destfile5)
 
 # We should clean game_attributes data. $release_date is in some weird format. Make it a date variable. Discard the time 
 #   aspect. $rating_text contains useful information. We want the percentage of positive ratings and the average rating number
@@ -173,10 +179,11 @@ game_players_price_data
 #   $unique_viewers is the number of viewers who ever appeared. $followers is the number of followers of the streamer at the time of the 
 #   stream. $stream_title is the title of the stream. And $games is a list of all games that are broadcasted in the same stream. 
 
+# task:total amount of viewing time for each game on each day
 #1) 分开games: expand.grid()
 #2）aggregate(viewer*duration ~ stream + game) #???用啥function
 #3) aggregate(sum(streamers) ~ game + date)
-#4) ???
+#4) number of streamers broadcasting game j/number of followers #???
 
 
 # Now, let us organize the data such that we count the total amount of viewing time for each game on each day. To do this, we have to process
