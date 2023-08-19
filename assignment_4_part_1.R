@@ -297,19 +297,6 @@ hist(cor_values, main="Distribution of Correlation Values", xlab="Correlation", 
 #1) 分开games: expand.grid()
 #2）aggregate(viewer*duration ~ stream + game) #???用啥function
 #3) aggregate(sum(streamers) ~ game + date)
-# Read the CSV data
-twitch_profiles_data <- read.csv(destfile4)
-twitch_streams_data <- read.csv(destfile5)
-
-# Merge twitch_streams_data with twitch_profiles_data to get streamer information
-merged_data <- merge(twitch_streams_data, twitch_profiles_data, by.x = "streamer_id", by.y = "streamer")
-
-# Aggregate the sum of streamers per game and date combination
-result <- aggregate(streamers ~ game + date, data = merged_data, FUN = sum)
-
-# Print the result
-print(result)
-
 #4) number of streamers broadcasting game j/number of followers #???
 
 
@@ -322,59 +309,29 @@ print(result)
 #   3. sum up the total viewing time for each game on each day, across streams. Also count how many streamers broadcasted the game on each day.
 #   Finally, because some streamers are "big" in that they attract many viewers, whereas other streamers are small. Compute a follower-weighted 
 #   measure of the number of streamers by summing up all streamers who broadcast the game by their followers (sum followers for those who broadcast game j)
-#(1) FORMAT 1
-setDT(twitch_streams_data) 
-twitch_streams_data$date <- as.Date(twitch_streams_data$date)
-streaming_date <- twitch_streams_data[, .(date_seq = seq(min(date), max(date), by = "days")), by = streamer]
-get_games <- function(streamer, date) {
-     games <- twitch_streams_data[streamer == streamer & date == date, games]
-     return(list(games))
-}
-streaming_date[, games_seq := mapply(get_games, streamer, date_seq)]
-long_df1 <- streaming_date[, .(streamer, date_seq, game = unlist(games_seq)), by = seq_len(nrow(streaming_date))]
-
-#(2) FORMAT 2
-setDT(twitch_streams_data) 
-get_games <- function(streamer, date) {
-     games <- twitch_streams_data[streamer == streamer, games]
-     return(list(games))
-}
-streaming_game_level <- twitch_streams_data[, .(games_seq = mapply(get_games, streamer)), by = streamer]
-long_df2 <- streaming_game_level[, .(streamer, game = unlist(games_seq)), by = seq_len(nrow(streaming_game_level))]
-
-#(3) FORMAT 3
-max_games <- max(sapply(twitch_streams_data$games, function(x) length(unlist(strsplit(x, ",")))))
-
 library(dplyr)
 library(tidyr)
 twitch_stream_game_stream_level <- twitch_streams_data %>%
      mutate(games = strsplit(games, ",\\s*")) %>%
      unnest(games)
 
-# multiply the number of viewers (not the unique viewer) by the stream duration to get the viewing time (unit is viewer-hour). 
-#   Then divide viewing time by the number of games.
-                        
-viewing.time <- twitch_streams_data$duration * twitch_streams_data$viewers
-viewing.time
+twitch_stream_game_stream_level$viewing_time <- twitch_stream_game_stream_level$duration * twitch_stream_game_stream_level$viewers
 
-twitch_streams_data <- cbind(twitch_streams_data, viewing.time)
-
-
-
-divided.viewing.time.data  <- aggregate(
-    x= viewing.time ~ games,
-    data = twitch_streams_data,
-    FUN = sum
+viewing_games <- aggregate(
+     x= viewing_time ~ games,
+     data = twitch_stream_game_stream_level,
+     FUN = sum
 )
-divided.viewing.time.data 
 
+viewing_games$divided_viewing_time <- viewing_games$viewing_time / length(viewing_games$games)
 
-number.games <-length(total.viewing.time$games)
+twitch_whole_data <- merge(twitch_stream_game_stream_level, 
+                           twitch_profiles_data, 
+                           by = "streamer")
 
-divided.viewing.time <- total.viewing.time$viewing.time/number.games
-
-
-divided.viewing.time.data <- cbind(divided.viewing.time.data, divided.viewing.time )
+streamer_count <- aggregate(x = twitch_profile ~ games + date,
+                            data = twitch_whole_data, 
+                            FUN = length)
 #############################
 # Step 4: Is there an association between Twitch streaming and video game playing?
 #############################
