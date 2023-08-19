@@ -221,29 +221,53 @@ for (app in unique_app_ids) {
 par(new = FALSE)
 
 
+#3）log的图
+# Pre-computing log of player counts and correlations
+unique_app_ids <- unique(top9_games_subset$app_id)
 top9_games_subset$log_player_count <- log(top9_games_subset$player_count)
-#plot: log_player_count & price.x
-ggplot(top9_games_subset, aes(x = date_seq, y = price.x, color = log_player_count, group = app_id)) +
-    geom_path() +
-    geom_smooth(method = "lm", se = FALSE, aes(group = 1), color = "black") +  # Add correlation line
-    labs(x = "Date", y = "Price", color = "Player Count") +
-    scale_color_continuous(name = "Player Count", low = "green", high = "red") +
-    facet_wrap(~ app_id, ncol = 3)
 
+# Set up a layout matrix for 9 plots, 3 columns by 3 rows
+correlations <- sapply(unique_app_ids, function(app) {
+    app_data <- subset(top9_games_subset, app_id == app)
+    cor_value <- cor(app_data$price.x, app_data$log_player_count, use = "complete.obs")
+    if(is.na(cor_value)) {
+        return(0)
+    } else {
+        return(round(cor_value, 3))
+    }
+}, USE.NAMES = TRUE)
 
-# Split data by ID and calculate correlations
-correlation_results <- lapply(split(top9_games_subset, top9_games_subset$app_id), function(subset) {
-    cor(subset$log_player_count, subset$price.x)
-})
+layout(matrix(1:9, ncol = 3))
 
-# Combine results into a data frame
-correlation_data <- data.frame(
-    app_id = names(correlation_results),
-    correlation = unlist(correlation_results)
-)
+# Loop through each app_id and plot the two lines
+for (app in unique_app_ids) {
+    
+    # Subset data for the current app
+    app_subset <- subset(top9_games_subset, app_id == app)
+    
+    # Define title
+    title_text <- paste("App ID:", app, "; Corr:", correlations[as.character(app)])
+    
+    # Plot price vs. date_seq
+    plot(app_subset$date_seq, app_subset$price.x, type = 'l', col = "red", ylim = range(app_subset$price.x),
+         xlab = 'Date', ylab = 'Price', main = title_text)
+    
+    # Overlay log of player counts on the same graph but different axis
+    par(new = TRUE)
+    plot(app_subset$date_seq, app_subset$log_player_count, type = 'l', col = "blue", 
+         xaxt = 'n', yaxt = 'n', xlab = '', ylab = '', ylim = range(app_subset$log_player_count))
+    
+    # Resetting par to default for next iteration
+    par(new = FALSE)
+}
+correlations
+average_correlation <- mean(correlations, na.rm = TRUE)
+print(average_correlation)
 
-# Print the correlation data
-print(correlation_data)
+cor_values <- as.numeric(correlations[correlations != "Not Available"])
+print(cor_values)
+hist(cor_values, main="Distribution of Correlation Values", xlab="Correlation", breaks=10, col="lightblue", border="black", las=1, cex.axis=0.8)
+
 
 # Now, perform a related (but different) exercise on the number of ratings and the average number of players. Note that we do 
 #   not see ratings on each day for each game. We simply see an average rating. So we cannot look at how rating changes and how that's
