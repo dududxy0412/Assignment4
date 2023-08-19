@@ -279,8 +279,25 @@ print(result)
 #   3. sum up the total viewing time for each game on each day, across streams. Also count how many streamers broadcasted the game on each day.
 #   Finally, because some streamers are "big" in that they attract many viewers, whereas other streamers are small. Compute a follower-weighted 
 #   measure of the number of streamers by summing up all streamers who broadcast the game by their followers (sum followers for those who broadcast game j)
+#(1) FORMAT 1
+setDT(twitch_streams_data) 
+twitch_streams_data$date <- as.Date(twitch_streams_data$date)
+streaming_date <- twitch_streams_data[, .(date_seq = seq(min(date), max(date), by = "days")), by = streamer]
+get_games <- function(streamer, date) {
+     games <- twitch_streams_data[streamer == streamer & date == date, games]
+     return(list(games))
+}
+streaming_date[, games_seq := mapply(get_games, streamer, date_seq)]
+long_df1 <- streaming_date[, .(streamer, date_seq, game = unlist(games_seq)), by = seq_len(nrow(streaming_date))]
 
-
+#(2) FORMAT 2
+setDT(twitch_streams_data) 
+get_games <- function(streamer, date) {
+     games <- twitch_streams_data[streamer == streamer, games]
+     return(list(games))
+}
+streaming_game_level <- twitch_streams_data[, .(games_seq = mapply(get_games, streamer)), by = streamer]
+long_df2 <- streaming_game_level[, .(streamer, game = unlist(games_seq)), by = seq_len(nrow(streaming_game_level))]
 
 
 
