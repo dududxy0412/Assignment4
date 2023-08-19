@@ -80,12 +80,12 @@ game_attributes_clean <- game_attributes_clean[
 game_attributes_clean$release_ymd <- 0
 game_attributes_clean$release_ymd <- as.Date(strptime(game_attributes_clean$release_date, format = "%d %B %Y"))
 
-game_attributes_clean$pos_percentage <- ifelse(grepl("^\\d+\\.\\d+% of.*", game_attributes_clean$rating_text),
-                          sub("^(\\d+\\.\\d+)% of.*", "\\1%", game_attributes_clean$rating_text),
-                          NA) #extract percentage data of postive ratings from rating_text
+
+game_attributes_clean$pos_percentage <- sub("^(\\d+\\.\\d+)% of.*", "\\1%", 
+                                            game_attributes_clean$rating_text) #extract percentage data of posotive ratings from rating_text
 
 game_attributes_clean$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user reviews are positive.*", 
-                                               "\\1", game_attributes_clean$rating_text) # extract how many reviews are postive from rating_text但是我越做越不对 总感觉不是这个意思 明天去问问
+                                               "\\1", game_attributes_clean$rating_text) # extract how many reviews are postive from rating_text
 
 # We need to clean the price change data to get daily prices. For a game-date combination, if the game_price_changes 
 #   data has an observation on that day, the $price variable in that data measures the price on that day. If there is no 
@@ -142,7 +142,11 @@ game_players_price_data
 #   correlation. Or you can plot a histogram. Do you still find negative correlation?
 
 
-
+#1) plot(time~price)
+#2) log(number of players)
+#3) correlation(log number of players and price) mark the game 
+#   and the correlation coefficient between the log number of players and price. Xinyi
+#4) mean(correlation), mean(distribution) and 画个直方图 Mengxi
 
 
 # Now, perform a related (but different) exercise on the number of ratings and the average number of players. Note that we do 
@@ -151,6 +155,10 @@ game_players_price_data
 #   log(average number of players) for each game. In the scatter plot, one observation is a game. Fit a line or curve between the two 
 #   variables. Also write down the correlation coefficient in the graph title. What can you conclude here?
 
+#5) scatter plot (the average rating ~ log(average number of players))
+# (write down the correlation coefficient in the graph title.) gia
+
+#6) make a conclusion
 
 
 #############################
@@ -165,7 +173,10 @@ game_players_price_data
 #   $unique_viewers is the number of viewers who ever appeared. $followers is the number of followers of the streamer at the time of the 
 #   stream. $stream_title is the title of the stream. And $games is a list of all games that are broadcasted in the same stream. 
 
-
+#1) 分开games: expand.grid()
+#2）aggregate(viewer*duration ~ stream + game) #???用啥function
+#3) aggregate(sum(streamers) ~ game + date)
+#4) ???
 
 
 # Now, let us organize the data such that we count the total amount of viewing time for each game on each day. To do this, we have to process
