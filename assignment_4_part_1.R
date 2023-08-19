@@ -318,6 +318,15 @@ get_games <- function(streamer, date) {
 streaming_game_level <- twitch_streams_data[, .(games_seq = mapply(get_games, streamer)), by = streamer]
 long_df2 <- streaming_game_level[, .(streamer, game = unlist(games_seq)), by = seq_len(nrow(streaming_game_level))]
 
+#(3) FORMAT 3
+max_games <- max(sapply(twitch_streams_data$games, function(x) length(unlist(strsplit(x, ",")))))
+
+library(dplyr)
+library(tidyr)
+twitch_stream_game_stream_level <- twitch_streams_data %>%
+     mutate(games = strsplit(games, ",\\s*")) %>%
+     unnest(games)
+
 
 
 #############################
