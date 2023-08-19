@@ -357,17 +357,25 @@ twitch_whole_data <- merge(twitch_stream_game_stream_level,
 streamer_count <- aggregate(x = twitch_profile ~ games + date,
                             data = twitch_whole_data, 
                             FUN = length)
+# summing up all streamers who broadcast the game by their followers (sum followers for those who broadcast game j)
+
+sum_followers <- twitch_stream_game_stream_level %>%
+     group_by(games) %>%
+     summarise(total_followers = sum(followers))
+
 #############################
 # Step 4: Is there an association between Twitch streaming and video game playing?
 #############################
 
 # Now we're ready to examine whether Twitch broadcasts are associated with the number of players in games
+# Now we're ready to examine whether Twitch broadcasts are associated with the number of players in games
 #   To begin with, merge the Twitch data on the daily total viewing hours and the number of streamers. 
-#   Drop games that do not exist in both data, but keep all dates for games that exist in both data even if 
-#   that date does not have streams. Finally, keep observations after 2017-01-01. 
-# For days when there is no stream, replace viewing hour, number of streamers, and sum of streamers' followers to zero
-# Drop observations without data on the number of players
+#  Drop games that do not exist in both data, 
+# but keep all dates for games that exist in both data even if 
+#  that date does not have streams. 
+
 twitch_viewing <- merge(viewing_games, streamer_count, by = "games")
+twitch_viewing <- merge(twitch_viewing, sum_followers, by = "games")
 twitch_viewing <- twitch_viewing[complete.cases(twitch_viewing), ]
 
 # Finally, keep observations after 2017-01-01. 
@@ -375,20 +383,18 @@ twitch_viewing$date <- as.Date(twitch_viewing$date)
 filtered_twitch_viewing <- twitch_viewing[twitch_viewing$date > as.Date("2017-01-01"), ]
 ordered_filtered_twitch_viewing <- filtered_twitch_viewing[order(filtered_twitch_viewing$date), ]
 
-
 # For days when there is no stream, replace viewing hour, number of streamers, and sum of streamers' followers to zero
 all_dates <- seq(min(ordered_filtered_twitch_viewing$date), max(ordered_filtered_twitch_viewing$date), by = "days")
 merged_data <- merge(ordered_filtered_twitch_viewing, data.frame(date = all_dates), by = "date", all.x = TRUE)
+
 merged_data[is.na(merged_data$viewing_time), "viewing_time"] <- 0
 merged_data[is.na(merged_data$twitch_profile), "twitch_profile"] <- 0
+merged_data[is.na(merged_data$total_followers), "total_followers"] <- 0
 
-# and sum of streamers' followers to zero
-sum_of_streamers_followers <- aggregate(x = followers ~ streamer,
-                                        data = twitch_whole_data,
-                                        FUN = sum)
-)
 # Drop observations without data on the number of players
-filtered_data <- merged_data[!is.na(merged_data$???), ] #???
+filtered_data <- merged_data[!is.na(merged_data$total_followers), ]
+filtered_data <- filtered_data[,1:6]
+
 
 
 # Now examine the correlation between the number of streamers who broadcast the game and the number of players 
