@@ -303,6 +303,8 @@ fit <- lm(merge_player_rating$pos_percentage ~ merge_player_rating$log_avg_daily
 abline(fit, col="red") # adds a linear regression line in red color
 #6) make a conclusion
 
+#Conclusion: There is a positive correlation between the log of average player numbers and the average rating being plotted.
+#This means that as average rating increases, the average number of players tends to increase as well.
 
 #############################
 # Step 3: now load the Twitch streamer data
