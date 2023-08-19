@@ -351,6 +351,13 @@ twitch_stream_game_stream_level <- twitch_streams_data %>%
      mutate(games = strsplit(games, ",\\s*")) %>%
      unnest(games)
 
+# multiply the number of viewers (not the unique viewer) by the stream duration to get the viewing time (unit is viewer-hour). 
+#   Then divide viewing time by the number of games.
+                        
+viewing.time <- twitch_streams_data$duration * twitch_streams_data$viewers
+viewing.time
+
+twitch_streams_data <- cbind(twitch_streams_data, viewing.time)
 
 
 #############################
