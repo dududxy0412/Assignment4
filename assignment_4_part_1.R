@@ -274,10 +274,33 @@ hist(cor_values, main="Distribution of Correlation Values", xlab="Correlation", 
 #   associated with the number of players. But at least we can still look at the scatter plot between the average rating and the 
 #   log(average number of players) for each game. In the scatter plot, one observation is a game. Fit a line or curve between the two 
 #   variables. Also write down the correlation coefficient in the graph title. What can you conclude here?
+# Step 1: Remove NA values from avg_daily_players$player_count
+avg_daily_players <- avg_daily_players[!is.na(avg_daily_players$player_count), ]
 
-#5) scatter plot (the average rating ~ log(average number of players))
-# (write down the correlation coefficient in the graph title.) gia
+# Step 2: Log Transformation
+avg_daily_players$log_avg_daily_players <- log(avg_daily_players$player_count)
 
+# Step 3: Merge Data Frames
+merge_player_rating <- merge(avg_daily_players, game_attributes_clean, by = "app_id")
+
+# Step 4: Check for Infinite or NA values after merging & handle them
+merge_player_rating <- merge_player_rating[!is.na(merge_player_rating$log_avg_daily_players) & 
+                                               !is.na(merge_player_rating$pos_percentage) & 
+                                               !is.infinite(merge_player_rating$log_avg_daily_players) & 
+                                               !is.infinite(merge_player_rating$pos_percentage), ]
+
+# Determine the finite range for y-axis values
+typeof(merge_player_rating$pos_percentage)
+merge_player_rating$pos_percentage <- as.numeric(sub("%", "", merge_player_rating$pos_percentage)) / 100
+
+# Scatter Plot with adjusted ylim values
+plot(merge_player_rating$log_avg_daily_players, merge_player_rating$pos_percentage, 
+     main="Average Rating vs Log(Avg. Number of Players)", 
+     xlab="Log(Average Number of Players)", 
+     ylab="Average Rating", 
+     pch=19, col="blue",cex=0.2)
+fit <- lm(merge_player_rating$pos_percentage ~ merge_player_rating$log_avg_daily_players, data=merge_player_rating)
+abline(fit, col="red") # adds a linear regression line in red color
 #6) make a conclusion
 
 
