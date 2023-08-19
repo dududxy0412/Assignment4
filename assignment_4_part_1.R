@@ -192,15 +192,34 @@ top9_games_merge <- merge(
     all.x = TRUE
 )
 
-top9_games_subset <- subset(top9_games_merge, app_id == top9_games$app_id)
+top9_games_subset <- subset(top9_games_merge, app_id %in% top9_games$app_id)
 top9_games_subset <- top9_games_subset[, c("app_id", "date_seq", "price.x", "player_count")]
 top9_games_subset <- na.omit(top9_games_subset)
 
 #plot: player_count & price.x
-ggplot(top9_games_subset, aes(x = date_seq, y = price.x, color = player_count)) +
-    geom_line() +
-    labs(x = "Date", y = "Price", color = "Player Count") +
-    facet_wrap(~ app_id, ncol = 3)
+
+unique_app_ids <- unique(top9_games_subset$app_id)
+num_apps <- length(unique_app_ids)
+
+# Set up a layout matrix for 9 plots, 3 columns by 3 rows
+layout(matrix(1:num_apps, ncol = 3))
+
+# Loop through each app_id and plot the two lines
+for (app in unique_app_ids) {
+    app_subset <- subset(top9_games_subset, app_id == app)
+    
+    # Plot price vs. date_seq
+    plot(price.x ~ date_seq, data = app_subset, type = 'l', xlab = 'Date', ylab = 'Price', main = paste('App ID:', app), col = "red")
+    
+    # Overlay player_count vs. date_seq
+    par(new = TRUE)
+    plot(player_count ~ date_seq, data = app_subset, type = 'l', xlab = '', ylab = '', axes = FALSE, col = "blue")
+    axis(side = 4)  # Add an axis to the right side
+}
+
+# Reset graphics parameters
+par(new = FALSE)
+
 
 top9_games_subset$log_player_count <- log(top9_games_subset$player_count)
 #plot: log_player_count & price.x
