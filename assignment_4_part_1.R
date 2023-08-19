@@ -240,18 +240,19 @@ correlations <- sapply(unique_app_ids, function(app) {
 layout(matrix(1:9, ncol = 3))
 
 # Loop through each app_id and plot the two lines
-for (app in unique_app_ids) {
+for (i in 1:length(unique_app_ids)) {
     
     # Subset data for the current app
-    app_subset <- subset(top9_games_subset, app_id == app)
+    app_subset <- subset(top9_games_subset, app_id == unique_app_ids[i])
     
     # Define title
-    title_text <- paste("App ID:", app, "; Corr:", correlations[as.character(app)])
+    title_text <- paste("App ID:", unique_app_ids[i])
     
     # Plot price vs. date_seq
     plot(app_subset$date_seq, app_subset$price.x, type = 'l', col = "red", ylim = range(app_subset$price.x),
          xlab = 'Date', ylab = 'Price', main = title_text)
     
+    mtext(paste("Corr:", correlations[i]), side=3)
     # Overlay log of player counts on the same graph but different axis
     par(new = TRUE)
     plot(app_subset$date_seq, app_subset$log_player_count, type = 'l', col = "blue", 
