@@ -254,6 +254,19 @@ print(correlation_data)
 #1) 分开games: expand.grid()
 #2）aggregate(viewer*duration ~ stream + game) #???用啥function
 #3) aggregate(sum(streamers) ~ game + date)
+# Read the CSV data
+twitch_profiles_data <- read.csv(destfile4)
+twitch_streams_data <- read.csv(destfile5)
+
+# Merge twitch_streams_data with twitch_profiles_data to get streamer information
+merged_data <- merge(twitch_streams_data, twitch_profiles_data, by.x = "streamer_id", by.y = "streamer")
+
+# Aggregate the sum of streamers per game and date combination
+result <- aggregate(streamers ~ game + date, data = merged_data, FUN = sum)
+
+# Print the result
+print(result)
+
 #4) number of streamers broadcasting game j/number of followers #???
 
 
