@@ -185,6 +185,46 @@ print(top9_games)
 #   and the correlation coefficient between the log number of players and price. Xinyi
 #4) mean(correlation), mean(distribution) and 画个直方图 Mengxi
 
+top9_games_merge <- merge(
+    daily_prices,
+    game_players_price_data,
+    by.x = c("app_id", "date_seq"), by.y = c("app_id", "date"),
+    all.x = TRUE
+)
+
+top9_games_subset <- subset(top9_games_merge, app_id == top9_games$app_id)
+top9_games_subset <- top9_games_subset[, c("app_id", "date_seq", "price.x", "player_count")]
+top9_games_subset <- na.omit(top9_games_subset)
+
+#plot: player_count & price.x
+ggplot(top9_games_subset, aes(x = date_seq, y = price.x, color = player_count)) +
+    geom_line() +
+    labs(x = "Date", y = "Price", color = "Player Count") +
+    facet_wrap(~ app_id, ncol = 3)
+
+top9_games_subset$log_player_count <- log(top9_games_subset$player_count)
+#plot: log_player_count & price.x
+ggplot(top9_games_subset, aes(x = date_seq, y = price.x, color = log_player_count, group = app_id)) +
+    geom_path() +
+    geom_smooth(method = "lm", se = FALSE, aes(group = 1), color = "black") +  # Add correlation line
+    labs(x = "Date", y = "Price", color = "Player Count") +
+    scale_color_continuous(name = "Player Count", low = "green", high = "red") +
+    facet_wrap(~ app_id, ncol = 3)
+
+
+# Split data by ID and calculate correlations
+correlation_results <- lapply(split(top9_games_subset, top9_games_subset$app_id), function(subset) {
+    cor(subset$log_player_count, subset$price.x)
+})
+
+# Combine results into a data frame
+correlation_data <- data.frame(
+    app_id = names(correlation_results),
+    correlation = unlist(correlation_results)
+)
+
+# Print the correlation data
+print(correlation_data)
 
 # Now, perform a related (but different) exercise on the number of ratings and the average number of players. Note that we do 
 #   not see ratings on each day for each game. We simply see an average rating. So we cannot look at how rating changes and how that's
