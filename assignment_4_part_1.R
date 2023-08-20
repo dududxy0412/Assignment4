@@ -45,8 +45,8 @@ library(data.table)
 #   occasions and the new prices at those occasions. 
 
 download_from_dropbox <- function(url, destfile) {
-     dropbox_url <- gsub("www.dropbox.com", "dl.dropboxusercontent.com", url)
-     GET(dropbox_url, write_disk(destfile, overwrite = TRUE))
+    dropbox_url <- gsub("www.dropbox.com", "dl.dropboxusercontent.com", url)
+    GET(dropbox_url, write_disk(destfile, overwrite = TRUE))
 }
 
 url1 <- "https://www.dropbox.com/scl/fi/n7vtdpym7sfsks3fnmrlz/game_attributes.csv?rlkey=ni7qq0507k81v0gwozn3j2wmv&dl=0"
@@ -91,7 +91,7 @@ game_attributes_clean$pos_percentage <- sub("^(\\d+\\.\\d+)% of.*", "\\1%",
                                             game_attributes_clean$rating_text) #extract percentage data of posotive ratings from rating_text
 
 game_attributes_clean$user_review_counts <- sub("^[0-9.]+% of the ([0-9,]+) user reviews are positive.*", 
-                                               "\\1", game_attributes_clean$rating_text) # extract how many reviews are postive from rating_text
+                                                "\\1", game_attributes_clean$rating_text) # extract how many reviews are postive from rating_text
 
 # We need to clean the price change data to get daily prices. For a game-date combination, if the game_price_changes 
 #   data has an observation on that day, the $price variable in that data measures the price on that day. If there is no 
@@ -339,26 +339,26 @@ abline(fit, col="red") # adds a linear regression line in red color
 library(dplyr)
 library(tidyr)
 twitch_streams_data <- twitch_streams_data %>%
-     mutate(games = strsplit(games, ",\\s*")) %>%
-     unnest(games)
+    mutate(games = strsplit(games, ",\\s*")) %>%
+    unnest(games)
 
 twitch_streams_data$viewing_time <- twitch_streams_data$duration * twitch_streams_data$viewers
 
 viewing_games <- aggregate(
-     viewing_time ~ games + date,
-     data = twitch_streams_data,
-     FUN = sum
+    viewing_time ~ games + date,
+    data = twitch_streams_data,
+    FUN = sum
 )
 
 viewing_games$divided_viewing_time <- viewing_games$viewing_time / length(viewing_games$games)
 
 streamer_count <- twitch_streams_data %>%
-     group_by(games, date) %>%
-     summarise(streamer_count = n_distinct(streamer))
+    group_by(games, date) %>%
+    summarise(streamer_count = n_distinct(streamer))
 
 sum_followers <- twitch_streams_data %>%
-     group_by(games) %>%
-     summarise(total_followers = sum(followers))
+    group_by(games) %>%
+    summarise(total_followers = sum(followers))
 
 #############################
 # Step 4: Is there an association between Twitch streaming and video game playing?
@@ -402,41 +402,27 @@ colnames(filtered_data)[2] <- "date"
 #   Alternatively, you can plot viewing hours, players, and number of streamers against time, just like what we did in step 2.
 
 
-top9_games_game_title <- merge(top9_games,
-                               game_attributes_clean,
-                               by = "app_id",
-                               all.x = TRUE)
-
+# Given from the prior code context
+top9_games_game_title <- merge(top9_games, game_attributes_clean, by = "app_id", all.x = TRUE)
 top9_games_after17 <- subset(top9_games_subset, date_seq > as.Date("2017-01-01"))
 colnames(top9_games_after17)[2] <- "date"
 
-top9_games_after17_title <- merge(top9_games_after17,
-                                  top9_games_game_title,
-                                  by = "app_id",
-                                  all.x = TRUE)
+top9_games_after17_title <- merge(top9_games_after17, top9_games_game_title, by = "app_id", all.x = TRUE)
 
-top9_games_twitch <- merge(top9_games_after17_title,
-                           filtered_data,
-                           by = c("date", "title"))
+# Merge Twitch data with game data
+colnames(viewing_games)[1] <- "title"
+top9_games_twitch <- merge(top9_games_after17_title, filtered_data, by = c("date", "title"))
+viewing_games$date <- as.Date(viewing_games$date)
+top9_games_twitch1 <- merge(top9_games_twitch, viewing_games, by = c("date", "title"))
 
-top9_games_game_title <- merge(top9_games,
-                               game_attributes_clean,
-                               by = "app_id",
-                               all.x = TRUE)
+# Compute log viewing time
+# Compute log for positive values, set 0 otherwise
+top9_games_twitch1$log_viewing_time <- ifelse(top9_games_twitch1$viewing_time.x > 0, 
+                                              log(top9_games_twitch1$viewing_time.x) + 1, 
+                                              0)
 
-top9_games_after17 <- subset(top9_games_subset, date_seq > as.Date("2017-01-01"))
-colnames(top9_games_after17)[2] <- "date"
-
-top9_games_after17_title <- merge(top9_games_after17,
-                                  top9_games_game_title,
-                                  by = "app_id",
-                                  all.x = TRUE)
-
-
-
-top9_games_twitch <- merge(top9_games_after17_title,
-                           filtered_data,
-                           by = c("date", "title"))
+# Handle potential NA values by setting them to 0 (or any other value you deem appropriate)
+top9_games_twitch1$log_viewing_time[is.na(top9_games_twitch1$log_viewing_time.x)] <- 0
 
 unique_app_ids <- unique(top9_games_subset$app_id)
 num_apps <- length(unique_app_ids)
@@ -446,21 +432,17 @@ layout(matrix(1:num_apps, ncol = 3))
 
 # Loop through each app_id and plot the two lines
 for (app in unique_app_ids) {
-    app_subset <- subset(top9_games_twitch, app_id == app)
+    app_data <- subset(top9_games_twitch1, app_id == app)
     
-    # Remove rows with NA or infinite values in any of the three variables
-    valid_data <- app_subset[!is.na(app_subset$date) & !is.infinite(app_subset$date) &
-                                 !is.na(app_subset$twitch_profile) & !is.infinite(app_subset$twitch_profile) &
-                                 !is.na(app_subset$player_count.x) & !is.infinite(app_subset$player_count.x), ]
     
-    if (nrow(valid_data) > 0) { # Check if there's valid data left
-        # Plot twitch_profile vs. date_seq
-        plot(twitch_profile ~ date, data = valid_data, type = 'l', xlab = 'Date', ylab = 'Price', main = paste('App ID:', app), col = "red")
-        
-        # Overlay player_count vs. date_seq
+    if (nrow(app_data) > 0) {
+        plot(streamer_count~ date, data = app_data, type = 'l', xlab = 'Date', ylab = 'Twitch Profile', main = paste('App ID:', app), col = "red")
         par(new = TRUE)
-        plot(player_count.x ~ date, data = valid_data, type = 'l', xlab = '', ylab = '', axes = FALSE, col = "blue")
-        axis(side = 4)  # Add an axis to the right side
+        plot(player_count.x ~ date, data = app_data, type = 'l', xlab = '', ylab = '', axes = FALSE, col = "blue")
+        axis(side = 4, col.axis = "blue", las = 1, line = -1) 
+        par(new = TRUE)
+        plot(log_viewing_time ~ date, data = app_data, type = 'l', xlab = '', ylab = '', axes = FALSE, col = "green")
+        axis(side = 4, col.axis = "green", las = 1, line = 2)
     } else {
         warning(paste("No valid data for App ID:", app))
     }
@@ -468,21 +450,3 @@ for (app in unique_app_ids) {
 
 # Reset graphics parameters
 par(new = FALSE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
