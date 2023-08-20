@@ -391,6 +391,7 @@ colnames(filtered_data)[2] <- "date"
 #   Alternatively, you can plot viewing hours, players, and number of streamers against time, just like what we did in step 2.
 
 
+
 # Given from the prior code context
 top9_games_game_title <- merge(top9_games, game_attributes_clean, by = "app_id", all.x = TRUE)
 top9_games_after17 <- subset(top9_games_subset, date_seq > as.Date("2017-01-01"))
@@ -413,11 +414,28 @@ top9_games_twitch1$log_viewing_time <- ifelse(top9_games_twitch1$viewing_time.x 
 # Handle potential NA values by setting them to 0 (or any other value you deem appropriate)
 top9_games_twitch1$log_viewing_time[is.na(top9_games_twitch1$log_viewing_time.x)] <- 0
 
-unique_app_ids <- unique(top9_games_subset$app_id)
+unique_app_ids <- unique(top9_games_twitch1$app_id)
 num_apps <- length(unique_app_ids)
+correlations <- sapply(unique_app_ids, function(app) {
+    app_data <- subset(top9_games_twitch1, app_id == app)
+    cor_value <- cor(app_data$player_count.x, app_data$log_viewing_time, use = "complete.obs")
+    if(is.na(cor_value)) {
+        return(0)
+    } else {
+        return(round(cor_value, 3))
+    }
+}, USE.NAMES = TRUE)
+
 
 # Set up a layout matrix for 9 plots, 3 columns by 3 rows
 layout(matrix(1:num_apps, ncol = 3))
+# Given from the prior code context
+# ... [your prior code
+
+
+# ... [rest of your plotting code]
+
+# This ensures that the plots and correlations are both computed and presented as needed.
 
 # Loop through each app_id and plot the two lines
 for (app in unique_app_ids) {
