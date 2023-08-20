@@ -335,13 +335,14 @@ abline(fit, col="red") # adds a linear regression line in red color
 #   3. sum up the total viewing time for each game on each day, across streams. Also count how many streamers broadcasted the game on each day.
 #   Finally, because some streamers are "big" in that they attract many viewers, whereas other streamers are small. Compute a follower-weighted 
 #   measure of the number of streamers by summing up all streamers who broadcast the game by their followers (sum followers for those who broadcast game j)
+
 library(dplyr)
 library(tidyr)
 twitch_streams_data <- twitch_streams_data %>%
      mutate(games = strsplit(games, ",\\s*")) %>%
      unnest(games)
 
-twitch_streams_data$viewing_time <- twitch_streams_data$duration * twitch_stream_games_data$viewers
+twitch_streams_data$viewing_time <- twitch_streams_data$duration * twitch_streams_data$viewers
 
 viewing_games <- aggregate(
      viewing_time ~ games + date,
@@ -355,7 +356,7 @@ streamer_count <- twitch_streams_data %>%
      group_by(games, date) %>%
      summarise(streamer_count = n_distinct(streamer))
 
-sum_followers <- twitch_stream_game_stream_level %>%
+sum_followers <- twitch_streams_data %>%
      group_by(games) %>%
      summarise(total_followers = sum(followers))
 
@@ -370,26 +371,26 @@ sum_followers <- twitch_stream_game_stream_level %>%
 # but keep all dates for games that exist in both data even if 
 #  that date does not have streams. 
 
-twitch_viewing <- merge(viewing_games, streamer_count, by = "games")
+library(data.table)
+viewing_games <- data.table(viewing_games)
+streamer_count <- data.table(streamer_count)
+sum_followers <- data.table(sum_followers)
+
+twitch_viewing <- merge(viewing_games, streamer_count, by = c("games", "date"))
 twitch_viewing <- merge(twitch_viewing, sum_followers, by = "games")
-twitch_viewing <- twitch_viewing[complete.cases(twitch_viewing), ]
+twitch_viewing <- twitch_viewing[complete.cases(twitch_viewing)]
 
-# Finally, keep observations after 2017-01-01. 
-twitch_viewing$date <- as.Date(twitch_viewing$date)
-filtered_twitch_viewing <- twitch_viewing[twitch_viewing$date > as.Date("2017-01-01"), ]
-ordered_filtered_twitch_viewing <- filtered_twitch_viewing[order(filtered_twitch_viewing$date), ]
+twitch_viewing[, date := as.Date(date)]
+twitch_viewing <- twitch_viewing[date > as.Date("2017-01-01")]
+all_dates <- seq(min(twitch_viewing$date), max(twitch_viewing$date), by = "days")
 
-# For days when there is no stream, replace viewing hour, number of streamers, and sum of streamers' followers to zero
-all_dates <- seq(min(ordered_filtered_twitch_viewing$date), max(ordered_filtered_twitch_viewing$date), by = "days")
-merged_data <- merge(ordered_filtered_twitch_viewing, data.frame(date = all_dates), by = "date", all.x = TRUE)
+merged_data <- twitch_viewing[CJ(date = all_dates), on = .(date), nomatch = 0]
 
-merged_data[is.na(merged_data$viewing_time), "viewing_time"] <- 0
-merged_data[is.na(merged_data$twitch_profile), "twitch_profile"] <- 0
-merged_data[is.na(merged_data$total_followers), "total_followers"] <- 0
+merged_data[is.na(viewing_time), viewing_time := 0]
+merged_data[is.na(streamer_count), streamer_count := 0]
+merged_data[is.na(total_followers), total_followers := 0]
 
-# Drop observations without data on the number of players
-filtered_data <- merged_data[!is.na(merged_data$total_followers), ]
-filtered_data <- filtered_data[,1:6]
+filtered_data <- merged_data[total_followers != 0]
 
 
 
