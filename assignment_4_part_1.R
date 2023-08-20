@@ -20,13 +20,6 @@
 
 
 # Load necessary libraries
-#TASK
-#1) date变时区 把time dicard掉
-#2）string提取信息：positive ratings and the average rating number???
-#3) price-date data cleaning 
-#4) average daily number of players, average price, total number of price changes, number of ratings and the fraction of positive reviews
-#5) mean sd
-#6) paid games: 9 games with the highest average daily players. 
 
 
 #############################
@@ -35,6 +28,9 @@
 # ====== CLEAR EVERYTHING ======
 rm(list = ls())
 library(httr)
+library(data.table)
+library(dplyr)
+library(tidyr)
 library(data.table)
 
 # We start with two data sets: Twitch and Steam. In this step we first work on cleaning Steam data
@@ -221,7 +217,7 @@ for (app in unique_app_ids) {
 par(new = FALSE)
 
 
-#3）log的图
+
 # Pre-computing log of player counts and correlations
 unique_app_ids <- unique(top9_games_subset$app_id)
 top9_games_subset$log_player_count <- log(top9_games_subset$player_count)
@@ -319,12 +315,6 @@ abline(fit, col="red") # adds a linear regression line in red color
 #   $unique_viewers is the number of viewers who ever appeared. $followers is the number of followers of the streamer at the time of the 
 #   stream. $stream_title is the title of the stream. And $games is a list of all games that are broadcasted in the same stream. 
 
-# task:total amount of viewing time for each game on each day
-#1) 分开games: expand.grid()
-#2）aggregate(viewer*duration ~ stream + game) #???用啥function
-#3) aggregate(sum(streamers) ~ game + date)
-#4) number of streamers broadcasting game j/number of followers #???
-
 
 # Now, let us organize the data such that we count the total amount of viewing time for each game on each day. To do this, we have to process
 #   the data in a few steps:
@@ -336,8 +326,7 @@ abline(fit, col="red") # adds a linear regression line in red color
 #   Finally, because some streamers are "big" in that they attract many viewers, whereas other streamers are small. Compute a follower-weighted 
 #   measure of the number of streamers by summing up all streamers who broadcast the game by their followers (sum followers for those who broadcast game j)
 
-library(dplyr)
-library(tidyr)
+
 twitch_streams_data <- twitch_streams_data %>%
     mutate(games = strsplit(games, ",\\s*")) %>%
     unnest(games)
@@ -371,7 +360,7 @@ sum_followers <- twitch_streams_data %>%
 # but keep all dates for games that exist in both data even if 
 #  that date does not have streams. 
 
-library(data.table)
+
 viewing_games <- data.table(viewing_games)
 streamer_count <- data.table(streamer_count)
 sum_followers <- data.table(sum_followers)
