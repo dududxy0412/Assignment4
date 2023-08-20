@@ -439,5 +439,6 @@ for (app in unique_app_ids) {
 
 legend("topleft", legend = c("Streamer Count", "Player Count", "Log Viewing Time"),
        col = c("red", "blue", "green"), lty = 1, cex = 0.8)
+
 # Reset graphics parameters
 par(new = FALSE)
