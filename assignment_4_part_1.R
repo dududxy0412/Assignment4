@@ -416,17 +416,6 @@ top9_games_twitch1$log_viewing_time[is.na(top9_games_twitch1$log_viewing_time.x)
 
 unique_app_ids <- unique(top9_games_twitch1$app_id)
 num_apps <- length(unique_app_ids)
-correlations <- sapply(unique_app_ids, function(app) {
-    app_data <- subset(top9_games_twitch1, app_id == app)
-    cor_value <- cor(app_data$player_count.x, app_data$log_viewing_time, use = "complete.obs")
-    if(is.na(cor_value)) {
-        return(0)
-    } else {
-        return(round(cor_value, 3))
-    }
-}, USE.NAMES = TRUE)
-
-
 # Set up a layout matrix for 9 plots, 3 columns by 3 rows
 layout(matrix(1:num_apps, ncol = 3))
 # Given from the prior code context
