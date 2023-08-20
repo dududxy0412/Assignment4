@@ -105,19 +105,19 @@ library(data.table)
 setDT(game_attributes_clean)
 setDT(game_players_data)
 setDT(game_price_changes_data)
-#1. 确保 price_change_date 是日期类型
+
 game_price_changes_data$price_change_date <- as.Date(game_price_changes_data$price_change_date)
-# 2. 移除含有 NA 的行
+
 game_price_changes_data <- game_price_changes_data[!is.na(price_change_date)]
-# 再次为每款游戏创建日期序列
+
 dates_list <- game_price_changes_data[, .(date_seq = seq(min(price_change_date), max(price_change_date), by = "days")), by = app_id]
-# 将日期序列与实际价格数据合并
+
 daily_prices <- merge(dates_list, game_price_changes_data, by.x = c("app_id", "date_seq"), by.y = c("app_id", "price_change_date"), all.x = TRUE)
-#使用setorder按照app_id和date_seq对daily_prices进行排序
+
 setorder(daily_prices, app_id, date_seq) 
-#使用nafill函数将每个app_id的price列中的NA值替换为上一个非NA值这相当于前向填充了这些NA值
+
 daily_prices[, price := nafill(price, type="locf"), by=app_id]
-#merge the price data and the players data
+
 game_players_data$date <- as.Date(game_players_data$date)
 game_players_price_data <- merge(game_players_data,daily_prices,by.x = c("app_id", "date"), by.y = c("app_id", "date_seq"), all.x = TRUE)
 game_players_price_data
