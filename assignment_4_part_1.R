@@ -403,7 +403,7 @@ colnames(viewing_games)[1] <- "title"
 top9_games_twitch <- merge(top9_games_after17_title, filtered_data, by = c("date", "title"))
 viewing_games$date <- as.Date(viewing_games$date)
 top9_games_twitch1 <- merge(top9_games_twitch, viewing_games, by = c("date", "title"))
-
+top9_games_twitch1 <- top9_games_twitch1[!(top9_games_twitch1$app_id %in% c(440, 570)), ]
 # Compute log viewing time
 # Compute log for positive values, set 0 otherwise
 top9_games_twitch1$log_viewing_time <- ifelse(top9_games_twitch1$viewing_time.x > 0, 
@@ -413,19 +413,58 @@ top9_games_twitch1$log_viewing_time <- ifelse(top9_games_twitch1$viewing_time.x 
 # Handle potential NA values by setting them to 0 (or any other value you deem appropriate)
 top9_games_twitch1$log_viewing_time[is.na(top9_games_twitch1$log_viewing_time.x)] <- 0
 
-unique_app_ids <- unique(top9_games_subset$app_id)
+unique_app_ids <- unique(top9_games_twitch1$app_id)
 num_apps <- length(unique_app_ids)
+correlations_player_viewing<- sapply(unique_app_ids, function(app) {
+    app_data <- subset(top9_games_twitch1, app_id == app)
+    cor_value <- cor(app_data$player_count.x, app_data$log_viewing_time, use = "complete.obs")
+    if(is.na(cor_value)) {
+        return(0)
+    } else {
+        return(round(cor_value, 3))
+    }
+}, USE.NAMES = TRUE)
+correlations_player_viewing
+correlations_player_streamer<- sapply(unique_app_ids, function(app) {
+    app_data <- subset(top9_games_twitch1, app_id == app)
+    cor_value <- cor(app_data$player_count.x, app_data$streamer_count, use = "complete.obs")
+    if(is.na(cor_value)) {
+        return(0)
+    } else {
+        return(round(cor_value, 3))
+    }
+}, USE.NAMES = TRUE)
+correlations_player_streamer
 
 # Set up a layout matrix for 9 plots, 3 columns by 3 rows
-layout(matrix(1:num_apps, ncol = 3))
+# 设定一个3x3的布局，但只为前7个位置分配图形
+# 设定一个3x3的布局，但只为前7个位置分配图形
+mat <- matrix(c(1, 2, 3,
+                4, 5, 6,
+                7, 8, 9), ncol = 3)
+
+layout(mat)
+
+# 为了确保我们只绘制7个图，让最后两个图为空
+layout.show(7)
+
+
+# Given from the prior code context
+# ... [your prior code
+
+
+# ... [rest of your plotting code]
+
+# This ensures that the plots and correlations are both computed and presented as needed.
 
 # Loop through each app_id and plot the two lines
-for (app in unique_app_ids) {
-    app_data <- subset(top9_games_twitch1, app_id == app)
+for (i in 1:length(unique_app_ids)) {
+    app_data <- subset(top9_games_twitch1, app_id == unique_app_ids[i])
     
     
     if (nrow(app_data) > 0) {
-        plot(streamer_count~ date, data = app_data, type = 'l', xlab = 'Date', ylab = 'Twitch Profile', main = paste('App ID:', app), col = "red")
+        plot(streamer_count~ date, data = app_data, type = 'l', xlab = 'Date', ylab = 'Twitch Profile', main = paste('App ID:', unique_app_ids[i]), col = "red")
+        mtext(paste("Corr_player_streamer:", correlations_player_streamer[i], "Corr_player_viewing:", correlations_player_viewing[i]), side = 3)
         par(new = TRUE)
         plot(player_count.x ~ date, data = app_data, type = 'l', xlab = '', ylab = '', axes = FALSE, col = "blue")
         axis(side = 4, col.axis = "blue", las = 1, line = -1) 
@@ -433,12 +472,9 @@ for (app in unique_app_ids) {
         plot(log_viewing_time ~ date, data = app_data, type = 'l', xlab = '', ylab = '', axes = FALSE, col = "green")
         axis(side = 4, col.axis = "green", las = 1, line = 2)
     } else {
-        warning(paste("No valid data for App ID:", app))
+        warning(paste("No valid data for App ID:", unique_app_ids[i]))
     }
 }
-
-legend("topleft", legend = c("Streamer Count", "Player Count", "Log Viewing Time"),
-       col = c("red", "blue", "green"), lty = 1, cex = 0.8)
 
 # Reset graphics parameters
 par(new = FALSE)
