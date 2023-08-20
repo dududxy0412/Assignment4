@@ -391,7 +391,8 @@ merged_data[is.na(streamer_count), streamer_count := 0]
 merged_data[is.na(total_followers), total_followers := 0]
 
 filtered_data <- merged_data[total_followers != 0]
-
+colnames(filtered_data)[1] <- "title"
+colnames(filtered_data)[2] <- "date"
 
 
 # Now examine the correlation between the number of streamers who broadcast the game and the number of players 
@@ -400,7 +401,7 @@ filtered_data <- merged_data[total_followers != 0]
 #   is not NaN). In both cases, title the graph with the correlation coefficient between the two covariates. 
 #   Alternatively, you can plot viewing hours, players, and number of streamers against time, just like what we did in step 2.
 
-colnames(filtered_data)[2] <- "title"
+
 top9_games_game_title <- merge(top9_games,
                                game_attributes_clean,
                                by = "app_id",
@@ -417,7 +418,7 @@ top9_games_after17_title <- merge(top9_games_after17,
 top9_games_twitch <- merge(top9_games_after17_title,
                            filtered_data,
                            by = c("date", "title"))
-colnames(filtered_data)[2] <- "title"
+
 top9_games_game_title <- merge(top9_games,
                                game_attributes_clean,
                                by = "app_id",
@@ -430,6 +431,8 @@ top9_games_after17_title <- merge(top9_games_after17,
                                   top9_games_game_title,
                                   by = "app_id",
                                   all.x = TRUE)
+
+
 
 top9_games_twitch <- merge(top9_games_after17_title,
                            filtered_data,
