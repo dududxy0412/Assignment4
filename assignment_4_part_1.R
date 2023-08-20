@@ -337,28 +337,23 @@ abline(fit, col="red") # adds a linear regression line in red color
 #   measure of the number of streamers by summing up all streamers who broadcast the game by their followers (sum followers for those who broadcast game j)
 library(dplyr)
 library(tidyr)
-twitch_stream_game_stream_level <- twitch_streams_data %>%
+twitch_streams_data <- twitch_streams_data %>%
      mutate(games = strsplit(games, ",\\s*")) %>%
      unnest(games)
 
-twitch_stream_game_stream_level$viewing_time <- twitch_stream_game_stream_level$duration * twitch_stream_game_stream_level$viewers
+twitch_streams_data$viewing_time <- twitch_streams_data$duration * twitch_stream_games_data$viewers
 
 viewing_games <- aggregate(
-     x= viewing_time ~ games,
-     data = twitch_stream_game_stream_level,
+     viewing_time ~ games + date,
+     data = twitch_streams_data,
      FUN = sum
 )
 
 viewing_games$divided_viewing_time <- viewing_games$viewing_time / length(viewing_games$games)
 
-twitch_whole_data <- merge(twitch_stream_game_stream_level, 
-                           twitch_profiles_data, 
-                           by = "streamer")
-
-streamer_count <- aggregate(x = twitch_profile ~ games + date,
-                            data = twitch_whole_data, 
-                            FUN = length)
-# summing up all streamers who broadcast the game by their followers (sum followers for those who broadcast game j)
+streamer_count <- twitch_streams_data %>%
+     group_by(games, date) %>%
+     summarise(streamer_count = n_distinct(streamer))
 
 sum_followers <- twitch_stream_game_stream_level %>%
      group_by(games) %>%
