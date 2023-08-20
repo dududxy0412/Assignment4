@@ -421,7 +421,54 @@ top9_games_after17_title <- merge(top9_games_after17,
 top9_games_twitch <- merge(top9_games_after17_title,
                            filtered_data,
                            by = c("date", "title"))
+colnames(filtered_data)[2] <- "title"
+top9_games_game_title <- merge(top9_games,
+                               game_attributes_clean,
+                               by = "app_id",
+                               all.x = TRUE)
 
+top9_games_after17 <- subset(top9_games_subset, date_seq > as.Date("2017-01-01"))
+colnames(top9_games_after17)[2] <- "date"
+
+top9_games_after17_title <- merge(top9_games_after17,
+                                  top9_games_game_title,
+                                  by = "app_id",
+                                  all.x = TRUE)
+
+top9_games_twitch <- merge(top9_games_after17_title,
+                           filtered_data,
+                           by = c("date", "title"))
+
+unique_app_ids <- unique(top9_games_subset$app_id)
+num_apps <- length(unique_app_ids)
+
+# Set up a layout matrix for 9 plots, 3 columns by 3 rows
+layout(matrix(1:num_apps, ncol = 3))
+
+# Loop through each app_id and plot the two lines
+for (app in unique_app_ids) {
+    app_subset <- subset(top9_games_twitch, app_id == app)
+    
+    # Remove rows with NA or infinite values in any of the three variables
+    valid_data <- app_subset[!is.na(app_subset$date) & !is.infinite(app_subset$date) &
+                                 !is.na(app_subset$twitch_profile) & !is.infinite(app_subset$twitch_profile) &
+                                 !is.na(app_subset$player_count.x) & !is.infinite(app_subset$player_count.x), ]
+    
+    if (nrow(valid_data) > 0) { # Check if there's valid data left
+        # Plot twitch_profile vs. date_seq
+        plot(twitch_profile ~ date, data = valid_data, type = 'l', xlab = 'Date', ylab = 'Price', main = paste('App ID:', app), col = "red")
+        
+        # Overlay player_count vs. date_seq
+        par(new = TRUE)
+        plot(player_count.x ~ date, data = valid_data, type = 'l', xlab = '', ylab = '', axes = FALSE, col = "blue")
+        axis(side = 4)  # Add an axis to the right side
+    } else {
+        warning(paste("No valid data for App ID:", app))
+    }
+}
+
+# Reset graphics parameters
+par(new = FALSE)
 
 
 
